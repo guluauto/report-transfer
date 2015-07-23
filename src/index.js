@@ -10,7 +10,7 @@ if (process.argv.length !== 4) {
     `
       Usage:
 
-      node ./index.js ./test/source_dir ./test/target_dir
+      gl-transfer ./test/source ./test/target
     `
   );
 
