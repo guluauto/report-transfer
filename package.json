@@ -4,7 +4,7 @@
   "description": "检测报告数据迁移",
   "main": "index.js",
   "scripts": {
-    "test": "mocha ./test/*.js"
+    "test": "./node_modules/.bin/mocha ./test/built/*.js"
   },
   "repository": {
     "type": "git",
@@ -18,6 +18,11 @@
   "license": "ISC",
   "dependencies": {
     "chai": "^3.2.0",
-    "mocha": "^2.2.5"
+    "mocha": "^2.2.5",
+    "shelljs": "^0.5.1"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-babel": "^5.1.0"
   }
 }
