@@ -12,28 +12,57 @@ let shell = require('shelljs');
 /**
  * @flow
  */
+
+/**
+ * @name Transfer
+ * @desc 报告数据迁移类
+ */
 class Transfer {
+  // 待迁移文件名集合
   _jsonfiles: Array<string>;
 
-  constructor(source_dir, target_dir) {
+  /**
+   * @name constructor
+   * @desc 构造函数
+   * @param {string} source_dir 老数据文件夹
+   * @param {string} target_dir 处理后新数据存放文件夹
+   */
+  constructor(source_dir: string, target_dir: string) {
     this.source_dir = source_dir;
     this.target_dir = target_dir;
   }
 
+  /**
+   * @name run
+   * @desc 开始迁移
+   */
   run() {
     this.copy();
     this.process();
     this.rename();
   }
 
+  /**
+   * @name jsonfiles
+   * @desc 获取需要迁移的文件名集合
+   * @returns {Array<string>} 返回文件名的数组
+   */
   jsonfiles(): Array<string> {
     return fs.readdirSync(this.target_dir);
   }
 
+  /**
+   * @name copy
+   * @desc 拷贝老数据文件到新数据文件夹
+   */
   copy() {
     shell.exec('cp -rf ' + path.join(this.source_dir, './*') + ' ' + this.target_dir);
   }
 
+  /**
+   * @name process
+   * @desc 处理老数据，转换成新数据
+   */
   process() {
     this._jsonfiles = this.jsonfiles();
 
@@ -47,6 +76,10 @@ class Transfer {
     });
   }
 
+  /**
+   * @name rename
+   * @desc 迁移老文件名至新文件名
+   */
   rename() {
     this._jsonfiles.forEach((filename: string) => {
       const ERR_SUFFIX = '_err';
