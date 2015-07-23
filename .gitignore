@@ -1,4 +1,5 @@
 built/
+test/target/
 
 # Logs
 logs

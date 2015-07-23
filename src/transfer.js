@@ -5,9 +5,9 @@
  * @email yunhua.xiao@guluauto.com
  *
  */
-var path = require('path');
-var fs = require('fs');
-var shell = require('shelljs');
+let path = require('path');
+let fs = require('fs');
+let shell = require('shelljs');
 
 /**
  * @flow
@@ -22,22 +22,23 @@ class Transfer {
 
   run() {
     this.copy();
-    this._jsonfiles = this.jsonfiles();
     this.process();
-    this.change_filename();
+    this.rename();
   }
 
   jsonfiles(): Array<string> {
-    return fs.readFileSync(this.target_dir);
+    return fs.readdirSync(this.target_dir);
   }
 
   copy() {
-    shell.cp('-Rf', path.join(this.source_dir, './*'), this.target_dir);
+    shell.exec('cp -rf ' + path.join(this.source_dir, './*') + ' ' + this.target_dir);
   }
 
   process() {
+    this._jsonfiles = this.jsonfiles();
+
     this._jsonfiles.forEach((filename: string) => {
-      let file_path = path.join(this.target_dir, filename);
+      let file_path = path.resolve(path.join(this.target_dir, filename));
       let report = require(file_path);
 
       report.test = true;
@@ -46,7 +47,7 @@ class Transfer {
     });
   }
 
-  change_filename() {
+  rename() {
     this._jsonfiles.forEach((filename: string) => {
       const ERR_SUFFIX = '_err';
       const PHOTO_SUFFIX = '_photo';
