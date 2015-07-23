@@ -1,0 +1,23 @@
+{
+  "name": "report-transfer",
+  "version": "0.0.1",
+  "description": "检测报告数据迁移",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha ./test/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@git.guluabc.com:node/report-transfer.git"
+  },
+  "keywords": [
+    "数据迁移",
+    "检测报告"
+  ],
+  "author": "Kane",
+  "license": "ISC",
+  "dependencies": {
+    "chai": "^3.2.0",
+    "mocha": "^2.2.5"
+  }
+}
