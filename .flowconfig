@@ -1,0 +1,13 @@
+[ignore]
+.*/node_modules/.*
+.*/built/.*
+.*/test/.*
+gulpfile.js
+package.json
+
+[include]
+
+[libs]
+
+[options]
+module.system=haste

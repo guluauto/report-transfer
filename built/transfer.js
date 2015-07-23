@@ -16,9 +16,62 @@ var fs = require('fs');
 var shell = require('shelljs');
 
 /**
+ * @name Item
+ * @desc 检测项结果
+ */
+
+var Item = function Item(o) {
+  _classCallCheck(this, Item);
+
+  for (var k in o) {
+    if (o.hasOwnProperty(k)) {
+      this[k] = o[k];
+    }
+  }
+}
+
+/**
+ * @name Processor
+ * @desc 数据处理器
+ */
+;
+
+var Processor = (function () {
+  function Processor() {
+    _classCallCheck(this, Processor);
+  }
+
+  _createClass(Processor, null, [{
+    key: 'image',
+    value: function image(item) {
+      var it = new Item(item);
+      it.image = [item.image];
+
+      return it;
+    }
+  }, {
+    key: 'input',
+    value: function input(_input) {
+      return new Item({
+        input: _input
+      });
+    }
+  }, {
+    key: 'input_date',
+    value: function input_date(_input_date) {
+      return new Item({
+        input_date: _input_date
+      });
+    }
+  }]);
+
+  return Processor;
+})()
+/**
  * @name Transfer
  * @desc 报告数据迁移类
  */
+;
 
 var Transfer = (function () {
 
@@ -73,6 +126,10 @@ var Transfer = (function () {
     /**
      * @name process
      * @desc 处理老数据，转换成新数据
+     * @todo
+     * 1. image to image Array
+     * 2. input field to object { input: xxx }
+     * 3. input date field to object { input_date: xxx }
      */
   }, {
     key: 'process',

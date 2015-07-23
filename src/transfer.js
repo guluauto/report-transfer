@@ -12,7 +12,44 @@ let shell = require('shelljs');
 /**
  * @flow
  */
+/**
+ * @name Item
+ * @desc 检测项结果
+ */
+class Item {
+  constructor(o) {
+    for (let k in o) {
+      if (o.hasOwnProperty(k)) {
+        this[k] = o[k];
+      }
+    }
+  }
+}
 
+/**
+ * @name Processor
+ * @desc 数据处理器
+ */
+class Processor {
+  static image(item: Object): Item {
+    let it = new Item(item);
+    it.image = [item.image];
+
+    return it;
+  }
+
+  static input(input: string): Item {
+    return new Item({
+      input: input
+    });
+  }
+
+  static input_date(input_date: string): Item {
+    return new Item({
+      input_date: input_date
+    });
+  }
+}
 /**
  * @name Transfer
  * @desc 报告数据迁移类
@@ -62,6 +99,10 @@ class Transfer {
   /**
    * @name process
    * @desc 处理老数据，转换成新数据
+   * @todo
+   * 1. image to image Array
+   * 2. input field to object { input: xxx }
+   * 3. input date field to object { input_date: xxx }
    */
   process() {
     this._jsonfiles = this.jsonfiles();
@@ -69,8 +110,6 @@ class Transfer {
     this._jsonfiles.forEach((filename: string) => {
       let file_path = path.resolve(path.join(this.target_dir, filename));
       let report = require(file_path);
-
-      report.test = true;
 
       fs.writeFileSync(file_path, JSON.stringify(report));
     });
