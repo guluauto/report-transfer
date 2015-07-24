@@ -110,7 +110,7 @@ class Transfer {
    * @desc 拷贝老数据文件到新数据文件夹
    */
   copy() {
-    shell.exec('cp -rf ' + path.join(this.source_dir, './gulu*') + ' ' + this.target_dir);
+    shell.exec('cp -rf ' + path.join(this.source_dir, './*') + ' ' + this.target_dir);
   }
 
   /**
