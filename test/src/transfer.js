@@ -36,6 +36,7 @@ describe('transfer.js', () => {
     it('should copy source dir files to target dir', () => {
       transfer.copy();
       let files = fs.readdirSync(transfer.target_dir);
+      files.splice(files.indexOf('.DS_Store'), 1);
 
       assert.equal(files.length, 4, 'copy ok');
     });
@@ -57,7 +58,14 @@ describe('transfer.js', () => {
 
       transfer._jsonfiles.forEach((filename) => {
         let report = require(path.join(transfer.target_dir, filename));
-        assert.ok(report.test, '已正确处理数据');
+        Object.keys(report).forEach((key) => {
+          Object.keys(report[key]).forEach((item_key) => {
+            assert.isObject(report[key][item_key], '基本数据类型转对象成功');
+            if (report[key][item_key].image != null) {
+              assert.isArray(report[key][item_key].image, '转图片数组成功');
+            }
+          });
+        });
       });
     });
   });

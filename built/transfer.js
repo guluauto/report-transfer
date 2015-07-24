@@ -23,9 +23,28 @@ var shell = require('shelljs');
 var Item = function Item(o) {
   _classCallCheck(this, Item);
 
-  for (var k in o) {
-    if (o.hasOwnProperty(k)) {
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    for (var _iterator = Object.keys(o)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var k = _step.value;
+
       this[k] = o[k];
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator['return']) {
+        _iterator['return']();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
     }
   }
 }
@@ -43,12 +62,24 @@ var Processor = (function () {
 
   _createClass(Processor, null, [{
     key: 'image',
+
+    /**
+     * @name image
+     * @desc 单个图片字符串转图片字符串数组
+     * @param item
+     */
     value: function image(item) {
       var it = new Item(item);
       it.image = [item.image];
 
       return it;
     }
+
+    /**
+     * @name input
+     * @desc 普通填写字符串转对象 { input: string }
+     * @param input
+     */
   }, {
     key: 'input',
     value: function input(_input) {
@@ -56,6 +87,12 @@ var Processor = (function () {
         input: _input
       });
     }
+
+    /**
+     * @name input_date
+     * @desc 日期填写字符串转对象 { input_date: string }
+     * @param input_date
+     */
   }, {
     key: 'input_date',
     value: function input_date(_input_date) {
@@ -110,7 +147,9 @@ var Transfer = (function () {
   }, {
     key: 'jsonfiles',
     value: function jsonfiles() {
-      return fs.readdirSync(this.target_dir);
+      var files = fs.readdirSync(this.target_dir);
+      files.splice(files.indexOf('.DS_Store'), 1);
+      return files;
     }
 
     /**
@@ -120,7 +159,7 @@ var Transfer = (function () {
   }, {
     key: 'copy',
     value: function copy() {
-      shell.exec('cp -rf ' + path.join(this.source_dir, './*') + ' ' + this.target_dir);
+      shell.exec('cp -rf ' + path.join(this.source_dir, './gulu*') + ' ' + this.target_dir);
     }
 
     /**
@@ -137,12 +176,35 @@ var Transfer = (function () {
       var _this = this;
 
       this._jsonfiles = this.jsonfiles();
+      var DATE_REG = /^\d{4}\-\d{2}\-\d{2}$/;
 
       this._jsonfiles.forEach(function (filename) {
         var file_path = path.resolve(path.join(_this.target_dir, filename));
         var report = require(file_path);
 
-        report.test = true;
+        Object.getOwnPropertyNames(report).forEach(function (key) {
+          var item_keys = Object.keys(report[key]);
+
+          if (item_keys.length) {
+            item_keys.forEach(function (item_key) {
+              var item = report[key][item_key];
+
+              if (typeof item === 'string') {
+                if (DATE_REG.test(item)) {
+                  return report[key][item_key] = Processor.input_date(item);
+                }
+
+                return report[key][item_key] = Processor.input(item);
+              }
+
+              if (typeof item === 'object') {
+                if (typeof item.image === 'string') {
+                  return report[key][item_key] = Processor.image(item);
+                }
+              }
+            });
+          }
+        });
 
         fs.writeFileSync(file_path, JSON.stringify(report));
       });

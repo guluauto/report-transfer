@@ -18,10 +18,8 @@ let shell = require('shelljs');
  */
 class Item {
   constructor(o) {
-    for (let k in o) {
-      if (o.hasOwnProperty(k)) {
-        this[k] = o[k];
-      }
+    for (let k of Object.keys(o)) {
+      this[k] = o[k];
     }
   }
 }
@@ -31,6 +29,11 @@ class Item {
  * @desc 数据处理器
  */
 class Processor {
+  /**
+   * @name image
+   * @desc 单个图片字符串转图片字符串数组
+   * @param item
+   */
   static image(item: Object): Item {
     let it = new Item(item);
     it.image = [item.image];
@@ -38,12 +41,22 @@ class Processor {
     return it;
   }
 
+  /**
+   * @name input
+   * @desc 普通填写字符串转对象 { input: string }
+   * @param input
+   */
   static input(input: string): Item {
     return new Item({
       input: input
     });
   }
 
+  /**
+   * @name input_date
+   * @desc 日期填写字符串转对象 { input_date: string }
+   * @param input_date
+   */
   static input_date(input_date: string): Item {
     return new Item({
       input_date: input_date
@@ -85,7 +98,11 @@ class Transfer {
    * @returns {Array<string>} 返回文件名的数组
    */
   jsonfiles(): Array<string> {
-    return fs.readdirSync(this.target_dir);
+    let files = fs.readdirSync(this.target_dir);
+    const OSX = '.DS_Store';
+
+    files.splice(files.indexOf(OSX), 1);
+    return files;
   }
 
   /**
@@ -93,7 +110,7 @@ class Transfer {
    * @desc 拷贝老数据文件到新数据文件夹
    */
   copy() {
-    shell.exec('cp -rf ' + path.join(this.source_dir, './*') + ' ' + this.target_dir);
+    shell.exec('cp -rf ' + path.join(this.source_dir, './gulu*') + ' ' + this.target_dir);
   }
 
   /**
@@ -106,10 +123,35 @@ class Transfer {
    */
   process() {
     this._jsonfiles = this.jsonfiles();
+    const DATE_REG = /^\d{4}\-\d{2}\-\d{2}$/;
 
     this._jsonfiles.forEach((filename: string) => {
       let file_path = path.resolve(path.join(this.target_dir, filename));
       let report = require(file_path);
+
+      Object.getOwnPropertyNames(report).forEach((key) => {
+        var item_keys = Object.keys(report[key]);
+
+        if (item_keys.length) {
+          item_keys.forEach((item_key) => {
+            var item = report[key][item_key];
+
+            if (typeof item === 'string') {
+              if (DATE_REG.test(item)) {
+                return report[key][item_key] = Processor.input_date(item);
+              }
+
+              return report[key][item_key] = Processor.input(item);
+            }
+
+            if (typeof item === 'object') {
+              if (typeof item.image === 'string') {
+                return report[key][item_key] = Processor.image(item);
+              }
+            }
+          });
+        }
+      });
 
       fs.writeFileSync(file_path, JSON.stringify(report));
     });
