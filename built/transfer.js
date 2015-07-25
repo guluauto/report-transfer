@@ -135,6 +135,7 @@ var Transfer = (function () {
     key: 'run',
     value: function run() {
       this.copy();
+      this.rm_cn_4filename();
       this.process();
       this.rename();
     }
@@ -148,7 +149,13 @@ var Transfer = (function () {
     key: 'jsonfiles',
     value: function jsonfiles() {
       var files = fs.readdirSync(this.target_dir);
-      files.splice(files.indexOf('.DS_Store'), 1);
+      var OSX = '.DS_Store';
+
+      var i = files.indexOf(OSX);
+      if (i !== -1) {
+        files.splice(i, 1);
+      }
+
       return files;
     }
 
@@ -159,7 +166,26 @@ var Transfer = (function () {
   }, {
     key: 'copy',
     value: function copy() {
-      shell.exec('cp -rf ' + path.join(this.source_dir, './gulu*') + ' ' + this.target_dir);
+      shell.exec('cp -rf ' + path.join(this.source_dir, './*') + ' ' + this.target_dir);
+    }
+
+    /**
+     *
+     */
+  }, {
+    key: 'rm_cn_4filename',
+    value: function rm_cn_4filename() {
+      var _this = this;
+
+      var files = this.jsonfiles();
+
+      files.forEach(function (filename) {
+        var n_filename = filename.replace(/^[\u4e00-\u9fa5\-0-9]+/g, '');
+        var o_file_path = path.join(_this.target_dir, filename);
+        var n_file_path = path.join(_this.target_dir, n_filename);
+
+        fs.renameSync(o_file_path, n_file_path);
+      });
     }
 
     /**
@@ -173,13 +199,15 @@ var Transfer = (function () {
   }, {
     key: 'process',
     value: function process() {
-      var _this = this;
+      var _this2 = this;
 
       this._jsonfiles = this.jsonfiles();
       var DATE_REG = /^\d{4}\-\d{2}\-\d{2}$/;
 
       this._jsonfiles.forEach(function (filename) {
-        var file_path = path.resolve(path.join(_this.target_dir, filename));
+        console.info(filename);
+
+        var file_path = path.resolve(path.join(_this2.target_dir, filename));
         var report = require(file_path);
 
         Object.getOwnPropertyNames(report).forEach(function (key) {
@@ -217,7 +245,7 @@ var Transfer = (function () {
   }, {
     key: 'rename',
     value: function rename() {
-      var _this2 = this;
+      var _this3 = this;
 
       this._jsonfiles.forEach(function (filename) {
         var ERR_SUFFIX = '_err';
@@ -225,8 +253,8 @@ var Transfer = (function () {
 
         if (filename.indexOf(ERR_SUFFIX) !== -1) {
           var n_filename = filename.replace(ERR_SUFFIX, PHOTO_SUFFIX);
-          var o_file_path = path.join(_this2.target_dir, filename);
-          var n_file_path = path.join(_this2.target_dir, n_filename);
+          var o_file_path = path.join(_this3.target_dir, filename);
+          var n_file_path = path.join(_this3.target_dir, n_filename);
 
           fs.renameSync(o_file_path, n_file_path);
         }

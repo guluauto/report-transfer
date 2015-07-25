@@ -87,7 +87,9 @@ class Transfer {
    * @desc 开始迁移
    */
   run() {
+    this.clear_output();
     this.copy();
+    this.rm_cn_4filename();
     this.process();
     this.rename();
   }
@@ -101,8 +103,20 @@ class Transfer {
     let files = fs.readdirSync(this.target_dir);
     const OSX = '.DS_Store';
 
-    files.splice(files.indexOf(OSX), 1);
+    let i = files.indexOf(OSX);
+    if (i !== -1) {
+      files.splice(i, 1);
+    }
+
     return files;
+  }
+
+  /**
+   * @name clear_output
+   * @desc 清空输出目录
+   */
+  clear_output() {
+    shell.exec('rm -rf ' + path.join(this.target_dir, './*'));
   }
 
   /**
@@ -111,6 +125,22 @@ class Transfer {
    */
   copy() {
     shell.exec('cp -rf ' + path.join(this.source_dir, './*') + ' ' + this.target_dir);
+  }
+
+  /**
+   * @name rm_cn_4filename
+   * @desc 取出文件名中的中文字符
+   */
+  rm_cn_4filename() {
+    let files = this.jsonfiles();
+
+    files.forEach((filename: string) => {
+      let n_filename = filename.replace(/^[\u4e00-\u9fa5\-0-9]+/g, '');
+      let o_file_path = path.join(this.target_dir, filename);
+      let n_file_path = path.join(this.target_dir, n_filename)
+
+      fs.renameSync(o_file_path, n_file_path);
+    });
   }
 
   /**
@@ -126,6 +156,8 @@ class Transfer {
     const DATE_REG = /^\d{4}\-\d{2}\-\d{2}$/;
 
     this._jsonfiles.forEach((filename: string) => {
+      console.info(filename);
+
       let file_path = path.resolve(path.join(this.target_dir, filename));
       let report = require(file_path);
 

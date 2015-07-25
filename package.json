@@ -4,7 +4,7 @@
   "description": "检测报告数据迁移",
   "main": "./src/index.js",
   "bin": {
-    "gl-transfer": "./built/index.js"
+    "gltrs": "./built/index.js"
   },
   "scripts": {
     "test": "./node_modules/.bin/mocha ./test/built/*.js"
