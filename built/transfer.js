@@ -134,6 +134,7 @@ var Transfer = (function () {
   _createClass(Transfer, [{
     key: 'run',
     value: function run() {
+      this.clear_output();
       this.copy();
       this.rm_cn_4filename();
       this.process();
@@ -160,6 +161,16 @@ var Transfer = (function () {
     }
 
     /**
+     * @name clear_output
+     * @desc 清空输出目录
+     */
+  }, {
+    key: 'clear_output',
+    value: function clear_output() {
+      shell.exec('rm -rf ' + path.join(this.target_dir, './*'));
+    }
+
+    /**
      * @name copy
      * @desc 拷贝老数据文件到新数据文件夹
      */
@@ -170,7 +181,8 @@ var Transfer = (function () {
     }
 
     /**
-     *
+     * @name rm_cn_4filename
+     * @desc 取出文件名中的中文字符
      */
   }, {
     key: 'rm_cn_4filename',

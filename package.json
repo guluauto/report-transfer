@@ -1,6 +1,6 @@
 {
   "name": "report-transfer",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "检测报告数据迁移",
   "main": "./src/index.js",
   "bin": {
@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "gulp": "^3.9.0",
-    "gulp-babel": "^5.1.0"
+    "gulp-babel": "^5.1.0",
+    "istanbul": "^0.3.17"
   }
 }

@@ -10,7 +10,7 @@ if (process.argv.length !== 4) {
     `
       Usage:
 
-      gl-transfer ./test/source ./test/target
+      gltrs ./test/source ./test/target
     `
   );
 

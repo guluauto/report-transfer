@@ -7,7 +7,7 @@ var Transfer = require('./transfer');
 if (process.argv.length !== 4) {
   console.error('参数不正确');
 
-  console.info('\n      Usage:\n\n      gl-transfer ./test/source ./test/target\n    ');
+  console.info('\n      Usage:\n\n      gltrs ./test/source ./test/target\n    ');
 
   process.exit(1);
 }
