@@ -16,7 +16,7 @@ var fs = require('fs');
 var shell = require('shelljs');
 
 /**
- * @name Item
+ * @class Item
  * @desc 检测项结果
  */
 
@@ -50,7 +50,7 @@ var Item = function Item(o) {
 }
 
 /**
- * @name Processor
+ * @class Processor
  * @desc 数据处理器
  */
 ;
@@ -64,9 +64,11 @@ var Processor = (function () {
     key: 'image',
 
     /**
-     * @name image
+     * @method image
      * @desc 单个图片字符串转图片字符串数组
+     * @static
      * @param item
+     * @returns {Item} 检测项结果
      */
     value: function image(item) {
       var it = new Item(item);
@@ -76,9 +78,11 @@ var Processor = (function () {
     }
 
     /**
-     * @name input
+     * @method input
      * @desc 普通填写字符串转对象 { input: string }
+     * @static
      * @param input
+     * @returns {Item} 检测项结果
      */
   }, {
     key: 'input',
@@ -89,7 +93,7 @@ var Processor = (function () {
     }
 
     /**
-     * @name input_date
+     * @method input_date
      * @desc 日期填写字符串转对象 { input_date: string }
      * @param input_date
      */
@@ -100,34 +104,58 @@ var Processor = (function () {
         input_date: _input_date
       });
     }
+
+    /**
+     * @method select
+     * @desc 下拉列表结果({ name: string, value: number })转对象 { selected: number }
+     * @static
+     * @param item
+     * @returns {Item} 检测项结果
+     */
+  }, {
+    key: 'select',
+    value: function select(item) {
+      return new Item({
+        selected: item.value
+      });
+    }
   }]);
 
   return Processor;
-})()
+})();
+
+var PREFIX = 'gulu.tester.';
+var ERR_SUFFIX = '_err';
+var PHOTO_SUFFIX = '_photo';
+var ORDER_SUFFIX = '_order';
+var REPORT_SUFFIX = '_report';
+var FILE_EXT = '.json';
+var CONNECT_STR = '_';
+
 /**
- * @name Transfer
+ * @class Transfer
  * @desc 报告数据迁移类
  */
-;
 
 var Transfer = (function () {
 
   /**
-   * @name constructor
+   * @constructor
    * @desc 构造函数
    * @param {string} source_dir 老数据文件夹
    * @param {string} target_dir 处理后新数据存放文件夹
    */
 
-  function Transfer(source_dir, target_dir) {
+  function Transfer(source_dir, target_dir, order_file) {
     _classCallCheck(this, Transfer);
 
     this.source_dir = source_dir;
     this.target_dir = target_dir;
+    this.order_file = order_file;
   }
 
   /**
-   * @name run
+   * @method run
    * @desc 开始迁移
    */
 
@@ -139,16 +167,21 @@ var Transfer = (function () {
       this.rm_cn_4filename();
       this.process();
       this.rename();
+      this.out_order();
     }
 
     /**
-     * @name jsonfiles
+     * @method jsonfiles
      * @desc 获取需要迁移的文件名集合
      * @returns {Array<string>} 返回文件名的数组
      */
   }, {
     key: 'jsonfiles',
     value: function jsonfiles() {
+      if (this._jsonfiles) {
+        return this._jsonfiles;
+      }
+
       var files = fs.readdirSync(this.target_dir);
       var OSX = '.DS_Store';
 
@@ -161,7 +194,7 @@ var Transfer = (function () {
     }
 
     /**
-     * @name clear_output
+     * @method clear_output
      * @desc 清空输出目录
      */
   }, {
@@ -171,7 +204,7 @@ var Transfer = (function () {
     }
 
     /**
-     * @name copy
+     * @method copy
      * @desc 拷贝老数据文件到新数据文件夹
      */
   }, {
@@ -181,7 +214,7 @@ var Transfer = (function () {
     }
 
     /**
-     * @name rm_cn_4filename
+     * @method rm_cn_4filename
      * @desc 取出文件名中的中文字符
      */
   }, {
@@ -201,12 +234,13 @@ var Transfer = (function () {
     }
 
     /**
-     * @name process
+     * @method process
      * @desc 处理老数据，转换成新数据
-     * @todo
+     *
      * 1. image to image Array
      * 2. input field to object { input: xxx }
      * 3. input date field to object { input_date: xxx }
+     * 4. select field to { selected: xxx }
      */
   }, {
     key: 'process',
@@ -217,8 +251,6 @@ var Transfer = (function () {
       var DATE_REG = /^\d{4}\-\d{2}\-\d{2}$/;
 
       this._jsonfiles.forEach(function (filename) {
-        console.info(filename);
-
         var file_path = path.resolve(path.join(_this2.target_dir, filename));
         var report = require(file_path);
 
@@ -241,6 +273,10 @@ var Transfer = (function () {
                 if (typeof item.image === 'string') {
                   return report[key][item_key] = Processor.image(item);
                 }
+
+                if (typeof item.value != null) {
+                  return report[key][item_key] = Processor.select(item);
+                }
               }
             });
           }
@@ -251,7 +287,7 @@ var Transfer = (function () {
     }
 
     /**
-     * @name rename
+     * @method rename
      * @desc 迁移老文件名至新文件名
      */
   }, {
@@ -260,16 +296,58 @@ var Transfer = (function () {
       var _this3 = this;
 
       this._jsonfiles.forEach(function (filename) {
-        var ERR_SUFFIX = '_err';
-        var PHOTO_SUFFIX = '_photo';
+        var o_file_path = path.join(_this3.target_dir, filename);
+        var n_file_path = undefined,
+            n_filename = undefined;
 
         if (filename.indexOf(ERR_SUFFIX) !== -1) {
-          var n_filename = filename.replace(ERR_SUFFIX, PHOTO_SUFFIX);
-          var o_file_path = path.join(_this3.target_dir, filename);
-          var n_file_path = path.join(_this3.target_dir, n_filename);
-
-          fs.renameSync(o_file_path, n_file_path);
+          n_filename = filename.replace(ERR_SUFFIX, PHOTO_SUFFIX);
+        } else {
+          n_filename = filename.replace(FILE_EXT, REPORT_SUFFIX + FILE_EXT);
         }
+
+        console.info(filename + ' --> ' + n_filename);
+
+        n_file_path = path.join(_this3.target_dir, n_filename);
+        fs.renameSync(o_file_path, n_file_path);
+      });
+    }
+
+    /**
+     * @method format_orders
+     * @desc 格式化订单列表数据，生成结果形式为：{ `order_id`: { ... } }
+     * @returns {{}}
+     */
+  }, {
+    key: 'format_orders',
+    value: function format_orders() {
+      var orders = require(this.order_file).data;
+      var brief_orders = {};
+      orders.forEach(function (item) {
+        brief_orders[item.id] = {
+          address: item.address,
+          contact: item.contact,
+          inspector: item.inspector,
+          appointment_time: item.appointment_time
+        };
+      });
+
+      return brief_orders;
+    }
+  }, {
+    key: 'out_order',
+    value: function out_order() {
+      var _this4 = this;
+
+      var brief_orders = this.format_orders();
+      var jsonfiles = this.jsonfiles();
+
+      jsonfiles.forEach(function (filename) {
+        var ids = filename.replace(PREFIX, '').replace(FILE_EXT, '').replace(ERR_SUFFIX, '').split(CONNECT_STR);
+        var order_id = ids[0];
+
+        var order_filename = path.join(_this4.target_dir, filename.indexOf(ERR_SUFFIX) !== -1 ? filename.replace(ERR_SUFFIX, ORDER_SUFFIX) : filename.replace(FILE_EXT, ORDER_SUFFIX + FILE_EXT));
+        fs.writeFileSync(order_filename, JSON.stringify(brief_orders[order_id]));
       });
     }
   }]);

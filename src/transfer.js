@@ -13,7 +13,7 @@ let shell = require('shelljs');
  * @flow
  */
 /**
- * @name Item
+ * @class Item
  * @desc 检测项结果
  */
 class Item {
@@ -25,16 +25,18 @@ class Item {
 }
 
 /**
- * @name Processor
+ * @class Processor
  * @desc 数据处理器
  */
 class Processor {
   /**
-   * @name image
+   * @method image
    * @desc 单个图片字符串转图片字符串数组
+   * @static
    * @param item
+   * @returns {Item} 检测项结果
    */
-  static image(item: Object): Item {
+  static image(item:Object):Item {
     let it = new Item(item);
     it.image = [item.image];
 
@@ -42,48 +44,73 @@ class Processor {
   }
 
   /**
-   * @name input
+   * @method input
    * @desc 普通填写字符串转对象 { input: string }
+   * @static
    * @param input
+   * @returns {Item} 检测项结果
    */
-  static input(input: string): Item {
+  static input(input:string):Item {
     return new Item({
       input: input
     });
   }
 
   /**
-   * @name input_date
+   * @method input_date
    * @desc 日期填写字符串转对象 { input_date: string }
    * @param input_date
    */
-  static input_date(input_date: string): Item {
+  static input_date(input_date:string):Item {
     return new Item({
       input_date: input_date
     });
   }
+
+  /**
+   * @method select
+   * @desc 下拉列表结果({ name: string, value: number })转对象 { selected: number }
+   * @static
+   * @param item
+   * @returns {Item} 检测项结果
+   */
+  static select(item:Object):Item {
+    return new Item({
+      selected: item.value
+    });
+  }
 }
+
+const PREFIX = 'gulu.tester.';
+const ERR_SUFFIX = '_err';
+const PHOTO_SUFFIX = '_photo';
+const ORDER_SUFFIX = '_order';
+const REPORT_SUFFIX = '_report';
+const FILE_EXT = '.json';
+const CONNECT_STR = '_';
+
 /**
- * @name Transfer
+ * @class Transfer
  * @desc 报告数据迁移类
  */
 class Transfer {
   // 待迁移文件名集合
-  _jsonfiles: Array<string>;
+  _jsonfiles:Array<string>;
 
   /**
-   * @name constructor
+   * @constructor
    * @desc 构造函数
    * @param {string} source_dir 老数据文件夹
    * @param {string} target_dir 处理后新数据存放文件夹
    */
-  constructor(source_dir: string, target_dir: string) {
+  constructor(source_dir:string, target_dir:string, order_file:string) {
     this.source_dir = source_dir;
     this.target_dir = target_dir;
+    this.order_file = order_file;
   }
 
   /**
-   * @name run
+   * @method run
    * @desc 开始迁移
    */
   run() {
@@ -92,14 +119,19 @@ class Transfer {
     this.rm_cn_4filename();
     this.process();
     this.rename();
+    this.out_order();
   }
 
   /**
-   * @name jsonfiles
+   * @method jsonfiles
    * @desc 获取需要迁移的文件名集合
    * @returns {Array<string>} 返回文件名的数组
    */
-  jsonfiles(): Array<string> {
+  jsonfiles():Array<string> {
+    if (this._jsonfiles) {
+      return this._jsonfiles;
+    }
+
     let files = fs.readdirSync(this.target_dir);
     const OSX = '.DS_Store';
 
@@ -112,7 +144,7 @@ class Transfer {
   }
 
   /**
-   * @name clear_output
+   * @method clear_output
    * @desc 清空输出目录
    */
   clear_output() {
@@ -120,7 +152,7 @@ class Transfer {
   }
 
   /**
-   * @name copy
+   * @method copy
    * @desc 拷贝老数据文件到新数据文件夹
    */
   copy() {
@@ -128,13 +160,13 @@ class Transfer {
   }
 
   /**
-   * @name rm_cn_4filename
+   * @method rm_cn_4filename
    * @desc 取出文件名中的中文字符
    */
   rm_cn_4filename() {
     let files = this.jsonfiles();
 
-    files.forEach((filename: string) => {
+    files.forEach((filename:string) => {
       let n_filename = filename.replace(/^[\u4e00-\u9fa5\-0-9]+/g, '');
       let o_file_path = path.join(this.target_dir, filename);
       let n_file_path = path.join(this.target_dir, n_filename)
@@ -144,20 +176,19 @@ class Transfer {
   }
 
   /**
-   * @name process
+   * @method process
    * @desc 处理老数据，转换成新数据
-   * @todo
+   *
    * 1. image to image Array
    * 2. input field to object { input: xxx }
    * 3. input date field to object { input_date: xxx }
+   * 4. select field to { selected: xxx }
    */
   process() {
     this._jsonfiles = this.jsonfiles();
     const DATE_REG = /^\d{4}\-\d{2}\-\d{2}$/;
 
-    this._jsonfiles.forEach((filename: string) => {
-      console.info(filename);
-
+    this._jsonfiles.forEach((filename:string) => {
       let file_path = path.resolve(path.join(this.target_dir, filename));
       let report = require(file_path);
 
@@ -180,6 +211,10 @@ class Transfer {
               if (typeof item.image === 'string') {
                 return report[key][item_key] = Processor.image(item);
               }
+
+              if (typeof item.value != null) {
+                return report[key][item_key] = Processor.select(item);
+              }
             }
           });
         }
@@ -190,21 +225,62 @@ class Transfer {
   }
 
   /**
-   * @name rename
+   * @method rename
    * @desc 迁移老文件名至新文件名
    */
   rename() {
-    this._jsonfiles.forEach((filename: string) => {
-      const ERR_SUFFIX = '_err';
-      const PHOTO_SUFFIX = '_photo';
+    this._jsonfiles.forEach((filename:string) => {
+      let o_file_path = path.join(this.target_dir, filename);
+      let n_file_path, n_filename;
 
       if (filename.indexOf(ERR_SUFFIX) !== -1) {
-        let n_filename = filename.replace(ERR_SUFFIX, PHOTO_SUFFIX);
-        let o_file_path = path.join(this.target_dir, filename);
-        let n_file_path = path.join(this.target_dir, n_filename)
-
-        fs.renameSync(o_file_path, n_file_path);
+        n_filename = filename.replace(ERR_SUFFIX, PHOTO_SUFFIX);
+      } else {
+        n_filename = filename.replace(FILE_EXT, REPORT_SUFFIX + FILE_EXT);
       }
+
+      console.info(filename + ' --> ' + n_filename);
+
+      n_file_path = path.join(this.target_dir, n_filename);
+      fs.renameSync(o_file_path, n_file_path);
+    });
+  }
+
+  /**
+   * @method format_orders
+   * @desc 格式化订单列表数据，生成结果形式为：{ `order_id`: { ... } }
+   * @returns {{}}
+   */
+  format_orders() {
+    let orders = require(this.order_file).data;
+    let brief_orders = {};
+    orders.forEach((item:Object) => {
+      brief_orders[item.id] = {
+        address: item.address,
+        contact: item.contact,
+        inspector: item.inspector,
+        appointment_time: item.appointment_time
+      };
+    });
+
+    return brief_orders;
+  }
+
+  out_order() {
+    let brief_orders = this.format_orders();
+    let jsonfiles = this.jsonfiles();
+
+    jsonfiles.forEach((filename:string) => {
+      let ids = filename.replace(PREFIX, '').replace(FILE_EXT, '').replace(ERR_SUFFIX, '').split(CONNECT_STR);
+      let order_id = ids[0];
+
+      let order_filename = path.join(
+        this.target_dir,
+        filename.indexOf(ERR_SUFFIX) !== -1
+          ? filename.replace(ERR_SUFFIX, ORDER_SUFFIX)
+          : filename.replace(FILE_EXT, ORDER_SUFFIX + FILE_EXT)
+      );
+      fs.writeFileSync(order_filename, JSON.stringify(brief_orders[order_id]));
     });
   }
 }
