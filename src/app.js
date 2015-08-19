@@ -1,6 +1,3 @@
-/**
- * Created by Kane on 15/8/19.
- */
 let express = require('express');
 let bodyParser = require('body-parser');
 let api = require('./api');

@@ -1,6 +1,3 @@
-/**
- * Created by Kane on 15/8/19.
- */
 'use strict';
 
 var express = require('express');
