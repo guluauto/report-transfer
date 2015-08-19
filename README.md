@@ -13,3 +13,17 @@ report-transfer
 ```bash
 gltrs ./test/source ./test/target ./order.json
 ```
+
+```javascript
+// POST /report/transfer
+// Body { "order_id": "", "car_id": "" }
+// Response
+{
+    "code": 200,
+    "data": {
+        "report": "",
+        "photo": "",
+        "order": ""
+    }
+}
+```
