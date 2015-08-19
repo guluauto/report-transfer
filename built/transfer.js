@@ -248,7 +248,7 @@ var Transfer = (function () {
       var _this2 = this;
 
       this._jsonfiles = this.jsonfiles();
-      var DATE_REG = /^\d{4}\-\d{2}\-\d{2}$/;
+      var DATE_REG = /^\d{4}\-\d{2}\-\d{2}.+$/;
 
       this._jsonfiles.forEach(function (filename) {
         var file_path = path.resolve(path.join(_this2.target_dir, filename));
@@ -274,7 +274,7 @@ var Transfer = (function () {
                   return report[key][item_key] = Processor.image(item);
                 }
 
-                if (typeof item.value != null) {
+                if (item.value != null) {
                   return report[key][item_key] = Processor.select(item);
                 }
               }

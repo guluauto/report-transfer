@@ -186,7 +186,7 @@ class Transfer {
    */
   process() {
     this._jsonfiles = this.jsonfiles();
-    const DATE_REG = /^\d{4}\-\d{2}\-\d{2}$/;
+    const DATE_REG = /^\d{4}\-\d{2}\-\d{2}.+$/;
 
     this._jsonfiles.forEach((filename:string) => {
       let file_path = path.resolve(path.join(this.target_dir, filename));
@@ -212,7 +212,7 @@ class Transfer {
                 return report[key][item_key] = Processor.image(item);
               }
 
-              if (typeof item.value != null) {
+              if (item.value != null) {
                 return report[key][item_key] = Processor.select(item);
               }
             }
