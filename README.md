@@ -11,5 +11,5 @@ report-transfer
 ## Usage
 
 ```bash
-gltrs ./test/source ./test/target
+gltrs ./test/source ./test/target ./order.json
 ```
