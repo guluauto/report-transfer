@@ -37,4 +37,16 @@ function transfer(req, res) {
   });
 }
 
+router.use('/transfer', (req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+
+  next();
+});
+
+router.options('/transfer', (req, res) => {
+  res.status(204).end();
+});
+
 router.post('/transfer', transfer);
